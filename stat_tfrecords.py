@@ -32,7 +32,7 @@ def class_stats(tfrecords):
         }
     )
 
-    label = tf.cast(features['image/class/label'], tf.int32)
+    label = features['image/class/label']
 
     image_count = 0
     class_image_count = {}
@@ -40,7 +40,8 @@ def class_stats(tfrecords):
     coord = tf.train.Coordinator()
     with tf.Session() as sess:
 
-        tf.initialize_all_variables().run()
+        tf.global_variables_initializer().run()
+        tf.local_variables_initializer().run()
         tf.train.start_queue_runners(sess=sess, coord=coord)
 
         try:
@@ -70,6 +71,9 @@ def class_stats(tfrecords):
     print("Class Index | Image Count")
     for class_label in class_labels:
         print("{0:11d} | {1:6d} ".format(class_label, class_image_count[class_label]))
+
+    if len(class_labels) == 0:
+        return
 
     # Can we detect if there any missing classes?
     max_class_index = max(class_labels)
@@ -121,7 +125,7 @@ def verify_bboxes(tfrecords):
 
     num_bboxes = tf.cast(features['image/object/bbox/count'], tf.int32)
 
-    bboxes = tf.concat(0, [xmin, ymin, xmax, ymax])
+    bboxes = tf.concat(axis=0, values=[xmin, ymin, xmax, ymax])
     bboxes = tf.transpose(bboxes, [1, 0])
 
     fetches = [image_id, image_height, image_width, bboxes, num_bboxes]
@@ -136,8 +140,8 @@ def verify_bboxes(tfrecords):
     coord = tf.train.Coordinator()
     with tf.Session() as sess:
 
-        tf.initialize_all_variables().run()
-        tf.initialize_local_variables().run()
+        tf.global_variables_initializer().run()
+        tf.local_variables_initializer().run()
         tf.train.start_queue_runners(sess=sess, coord=coord)
 
         try:
