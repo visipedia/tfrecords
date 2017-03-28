@@ -60,7 +60,7 @@ def _validate_text(text):
         return text
     elif isinstance(text, unicode):
         return text.encode('utf8', 'ignore')
-    else
+    else:
         return str(text)
 
 def _convert_to_example(image_example, image_buffer, height, width, colorspace='RGB',
