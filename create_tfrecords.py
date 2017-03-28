@@ -55,9 +55,13 @@ def _bytes_feature(value):
 
 def _validate_text(text):
     """If text is not str or unicode, then try to convert it to str."""
-    if not isinstance(text, str) or not isinstance(text, unicode):
-         return str(text)
-    return text
+    
+    if isinstance(text, str):
+        return text
+    elif isinstance(text, unicode):
+        return text.encode('utf8', 'ignore')
+    else
+        return str(text)
 
 def _convert_to_example(image_example, image_buffer, height, width, colorspace='RGB',
                         channels=3, image_format='JPEG'):
