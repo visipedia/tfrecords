@@ -53,6 +53,11 @@ def _bytes_feature(value):
         value = [value]
     return tf.train.Feature(bytes_list=tf.train.BytesList(value=value))
 
+def _validate_text(text):
+    """If text is not str or unicode, then try to convert it to str."""
+    if not isinstance(text, str) or not isinstance(text, unicode):
+         return str(text)
+    return text
 
 def _convert_to_example(image_example, image_buffer, height, width, colorspace='RGB',
                         channels=3, image_format='JPEG'):
@@ -73,7 +78,7 @@ def _convert_to_example(image_example, image_buffer, height, width, colorspace='
     # Class label for the whole image
     image_class = image_example.get('class', {})
     class_label = image_class.get('label', 0)
-    class_text = str(image_class.get('text', ''))
+    class_text = _validate_text(image_class.get('text', ''))
     class_conf = image_class.get('conf', 1.)
 
     # Objects
@@ -88,7 +93,7 @@ def _convert_to_example(image_example, image_buffer, height, width, colorspace='
     ymax = image_bboxes.get('ymax', [])
     bbox_scores = image_bboxes.get('score', [])
     bbox_labels = image_bboxes.get('label', [])
-    bbox_text = map(str, image_bboxes.get('text', []))
+    bbox_text = map(_validate_text, image_bboxes.get('text', []))
     bbox_label_confs = image_bboxes.get('conf', [])
 
     # Parts
