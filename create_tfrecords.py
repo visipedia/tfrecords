@@ -387,7 +387,7 @@ def parse_args():
 
     parser = argparse.ArgumentParser(description='Basic statistics on tfrecord files')
 
-    parser.add_argument('--dataset_path', dest='dataset',
+    parser.add_argument('--dataset_path', dest='dataset_path',
                         help='Path to the dataset json file.', type=str,
                         required=True)
 
@@ -419,8 +419,11 @@ def main():
 
     args = parse_args()
 
+    with open(args.dataset_path) as f:
+        dataset = json.load(f)
+
     errors = create(
-        dataset=args.dataset,
+        dataset=dataset,
         dataset_name=args.dataset_name,
         output_directory=args.output_dir,
         num_shards=args.num_shards,
