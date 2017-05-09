@@ -23,6 +23,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import argparse
 from datetime import datetime
 import os
 from Queue import Queue
@@ -55,7 +56,7 @@ def _bytes_feature(value):
 
 def _validate_text(text):
     """If text is not str or unicode, then try to convert it to str."""
-    
+
     if isinstance(text, str):
         return text
     elif isinstance(text, unicode):
@@ -380,3 +381,54 @@ def create(dataset, dataset_name, output_directory, num_shards, num_threads, shu
     print ('%d examples failed.' % (len(errors),))
 
     return errors
+
+
+def parse_args():
+
+    parser = argparse.ArgumentParser(description='Basic statistics on tfrecord files')
+
+    parser.add_argument('--dataset_path', dest='dataset',
+                        help='Path to the dataset json file.', type=str,
+                        required=True)
+
+    parser.add_argument('--prefix', dest='dataset_name',
+                        help='Prefix for the tfrecords (e.g. `train`, `test`, `val`).', type=str,
+                        required=True)
+
+    parser.add_argument('--output_dir', dest='output_dir',
+                        help='Directory for the tfrecords.', type=str,
+                        required=True)
+
+    parser.add_argument('--shards', dest='num_shards',
+                        help='Number of shards to make.', type=int,
+                        required=True)
+
+    parser.add_argument('--threads', dest='num_threads',
+                        help='Number of threads to make.', type=int,
+                        required=True)
+
+    parser.add_argument('--shuffle', dest='shuffle',
+                        help='Shuffle the records before saving them.',
+                        required=False, action='store_true', default=True)
+
+    parsed_args = parser.parse_args()
+
+    return parsed_args
+
+def main():
+
+    args = parse_args()
+
+    errors = create(
+        dataset=args.dataset,
+        dataset_name=args.dataset_name,
+        output_directory=args.output_dir,
+        num_shards=args.num_shards,
+        num_threads=args.num_threads,
+        shuffle=args.shuffle
+    )
+
+    return errors
+
+if __name__ == '__main__':
+    main()
