@@ -123,7 +123,7 @@ def verify_bboxes(tfrecords):
     xmax = tf.expand_dims(features['image/object/bbox/xmax'].values, 0)
     ymax = tf.expand_dims(features['image/object/bbox/ymax'].values, 0)
 
-    num_bboxes = tf.cast(features['image/object/bbox/count'], tf.int32)
+    num_bboxes = tf.cast(features['image/object/count'], tf.int32)
 
     bboxes = tf.concat(axis=0, values=[xmin, ymin, xmax, ymax])
     bboxes = tf.transpose(bboxes, [1, 0])
@@ -194,20 +194,20 @@ def verify_bboxes(tfrecords):
     print("Found %d images" % (image_count,))
     print()
     print("Found %d images with small bboxes" % (len(images_with_small_bboxes),))
-    print("Images with areas < 10:")
-    for img_id in images_with_small_bboxes:
-        print(img_id)
+    #print("Images with areas < 10:")
+    #for img_id in images_with_small_bboxes:
+    #    print(img_id)
     print()
     print("Found %d images with reversed coordinates" %
           (len(images_with_reversed_coords),))
-    print("Images with reversed coordinates:")
-    for img_id in images_with_reversed_coords:
-        print(img_id)
+    #print("Images with reversed coordinates:")
+    #for img_id in images_with_reversed_coords:
+    #    print(img_id)
     print()
     print("Found %d images with bbox count mismatches" %
           (len(images_with_bbox_count_mismatch),))
-    for img_id in images_with_bbox_count_mismatch:
-        print(img_id)
+    #for img_id in images_with_bbox_count_mismatch:
+    #    print(img_id)
     print()
 
     bbox_widths = np.round(np.array(bbox_widths)).astype(int)
