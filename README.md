@@ -1,5 +1,7 @@
 # tfrecords
-Convenience functions to create tfrecords that can be used with classification, detection and keypoint localization systems. The [create_tfrecords.py](create_tfrecords.py) file will help create the correct tfrecords to feed into those systems.
+Convenience functions to create tfrecords that can be used with classification, detection and keypoint localization systems. The [create_tfrecords.py](create_tfrecords.py) file will help create the correct tfrecords to feed into those systems. 
+
+There are configuration parameters that dictate whether to store the raw images in the tfrecords or not (`store_images=True` in `create_tfrecords.create` method or `--store_images` when calling `create_tfrecords.py` from the command line). If you choose not to store the raw images in the tfrecords, then you should be mindful that the `filename` field needs to be a valid path on the system where you will be processing the tfrecords. Also, if those images are too big, you may find that your input pipelines for your model struggle to fill the input queues. Resizing images to 800px seems to work well.  
 
 # Inputs
 
@@ -88,7 +90,7 @@ image_data = {
 }
 ```
 
-If the `encoded` key is not provided. Then the `create` method will read in the image by using the `filename` value. In this case, it is assumed that image is stored in either jpg or png format. If `encoded` is provided, then it is required to provide `height`, `width`, `format`, `colorspace`, and `channels` as well. 
+If the `encoded` key is not provided, then the `create` method will read in the image by using the `filename` value (if we request the images to be stored in the tfrecords). In this case, it is assumed that image is stored in either jpg or png format. The image will be converted to the jpg format for storage in the tfrecord. If `encoded` is provided, then it is required to provide `height`, `width`, `format`, `colorspace`, and `channels` as well. 
 
 Once you have your dataset preprocessed, you can use the `create method` in [create_tfrecords.py](create_tfrecords.py) to create the tfrecords files. For example:
 
@@ -103,7 +105,8 @@ failed_images = create(
   dataset_name="train",
   output_directory="/home/gvanhorn/Desktop/train_dataset",
   num_shards=10,
-  num_threads=5
+  num_threads=5,
+  store_images=True
 )
 ```
 
@@ -116,3 +119,19 @@ print("%d images failed." % (len(failed_images),))
 for image_data in failed_images:
   print("Image %s: %s" % (image_data['id'], image_data['error_msg']))
 ```
+
+If you do not want the images to be stored in the tfrecords, then you can pass `store_images=False` to the `create` method. Subsequently, code that reads the tfrecords will be expected to load in the image using the `filename` field. 
+
+If you have saved your preprocessed dataset list into a json file, such as `train_tfrecords_dataset.json`, then you can call `create_tfrecords.py` from the command line to create the tfrecords:
+```
+python create_tfrecords.py \
+--dataset_path /home/gvanhorn/Desktop/train_dataset/train_tfrecords_dataset.json \
+--prefix train \
+--output_dir /home/gvanhorn/Desktop/train_dataset \
+--shards 10 \
+--threads 5 \
+--shuffle \
+--store_images
+```
+
+If you do not want the images stored in the tfrecords, then you can exclude the `--store_images` argument.
