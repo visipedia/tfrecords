@@ -25,6 +25,7 @@ from __future__ import print_function
 
 import argparse
 from datetime import datetime
+import hashlib
 import json
 import os
 from Queue import Queue
@@ -118,6 +119,10 @@ def _convert_to_example(image_example, image_buffer, height, width, colorspace='
     # Any extra data (e.g. stringified json)
     extra_info = str(image_class.get('extra', ''))
 
+    # Additional fields for the format needed by the Object Detection repository
+    key = hashlib.sha256(image_buffer).hexdigest()
+    is_crowd = image_objects.get('is_crowd', [])
+
     example = tf.train.Example(features=tf.train.Features(feature={
         'image/height': _int64_feature(height),
         'image/width': _int64_feature(width),
@@ -145,7 +150,15 @@ def _convert_to_example(image_example, image_buffer, height, width, colorspace='
         'image/object/parts/score' : _float_feature(parts_s),
         'image/object/count' : _int64_feature(object_count),
         'image/object/area' : _float_feature(object_areas),
-        'image/object/id' : _bytes_feature(object_ids)
+        'image/object/id' : _bytes_feature(object_ids),
+
+        # Additional fields for the format needed by the Object Detection repository
+        'image/source_id': _bytes_feature(image_id),
+        'image/key/sha256': _bytes_feature(key),
+        'image/object/class/label': _int64_feature(bbox_labels),
+        'image/object/class/text': _bytes_feature(bbox_text),
+        'image/object/is_crowd': _int64_feature(is_crowd)
+
     }))
     return example
 
