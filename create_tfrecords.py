@@ -20,15 +20,13 @@ A lot of this code comes from the tensorflow inception example, so here is their
 
 """
 from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
 import argparse
 from datetime import datetime
 import hashlib
 import json
 import os
-from Queue import Queue
+from queue import Queue
 import random
 import sys
 import threading
@@ -50,19 +48,22 @@ def _float_feature(value):
     return tf.train.Feature(float_list=tf.train.FloatList(value=value))
 
 
+def _bytes_list_feature(value):
+    """Wrapper for inserting bytes list features into Example proto."""
+    value = [x.encode('utf8') for x in value]
+    return tf.train.Feature(bytes_list=tf.train.BytesList(value=value))
+
 def _bytes_feature(value):
     """Wrapper for inserting bytes features into Example proto."""
-    if not isinstance(value, list):
-        value = [value]
-    return tf.train.Feature(bytes_list=tf.train.BytesList(value=value))
+    if not isinstance(value, bytes):
+        value = value.encode('utf8')
+    return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
 def _validate_text(text):
     """If text is not str or unicode, then try to convert it to str."""
 
     if isinstance(text, str):
         return text
-    elif isinstance(text, unicode):
-        return text.encode('utf8', 'ignore')
     else:
         return str(text)
 
@@ -134,14 +135,14 @@ def _convert_to_example(image_example, image_buffer, height, width, colorspace='
         'image/encoded': _bytes_feature(image_buffer),
         'image/extra': _bytes_feature(extra_info),
         'image/class/label': _int64_feature(class_label),
-        'image/class/text': _bytes_feature(class_text),
+        'image/class/text': _bytes_list_feature(class_text),
         'image/class/conf': _float_feature(class_conf),
         'image/object/bbox/xmin': _float_feature(xmin),
         'image/object/bbox/xmax': _float_feature(xmax),
         'image/object/bbox/ymin': _float_feature(ymin),
         'image/object/bbox/ymax': _float_feature(ymax),
         'image/object/bbox/label': _int64_feature(bbox_labels),
-        'image/object/bbox/text': _bytes_feature(bbox_text),
+        'image/object/bbox/text': _bytes_list_feature(bbox_text),
         'image/object/bbox/conf': _float_feature(bbox_label_confs),
         'image/object/bbox/score' : _float_feature(bbox_scores),
         'image/object/parts/x' : _float_feature(parts_x),
@@ -150,13 +151,13 @@ def _convert_to_example(image_example, image_buffer, height, width, colorspace='
         'image/object/parts/score' : _float_feature(parts_s),
         'image/object/count' : _int64_feature(object_count),
         'image/object/area' : _float_feature(object_areas),
-        'image/object/id' : _bytes_feature(object_ids),
+        'image/object/id' : _bytes_list_feature(object_ids),
 
         # Additional fields for the format needed by the Object Detection repository
-        'image/source_id': _bytes_feature(image_id),
+        'image/source_id': _bytes_list_feature(image_id),
         'image/key/sha256': _bytes_feature(key),
         'image/object/class/label': _int64_feature(bbox_labels),
-        'image/object/class/text': _bytes_feature(bbox_text),
+        'image/object/class/text': _bytes_list_feature(bbox_text),
         'image/object/is_crowd': _int64_feature(is_crowd)
 
     }))
@@ -213,7 +214,7 @@ def _process_image(filename, coder):
       width: integer, image width in pixels.
     """
     # Read the image file.
-    image_data = tf.gfile.FastGFile(filename, 'r').read()
+    image_data = tf.gfile.FastGFile(filename, 'rb').read()
 
     # Clean the dirty data.
     if _is_png(filename):
@@ -260,7 +261,7 @@ def _process_image_files_batch(coder, thread_index, ranges, name, output_directo
 
     counter = 0
     error_counter = 0
-    for s in xrange(num_shards_per_batch):
+    for s in range(num_shards_per_batch):
         # Generate a sharded version of the file name, e.g. 'train-00002-of-00010'
         shard = thread_index * num_shards_per_batch + s
         output_filename = '%s-%.5d-of-%.5d' % (name, shard, num_shards)
@@ -368,7 +369,7 @@ def create(dataset, dataset_name, output_directory, num_shards, num_threads, shu
     spacing = np.linspace(0, len(dataset), num_threads + 1).astype(np.int)
     ranges = []
     threads = []
-    for i in xrange(len(spacing) - 1):
+    for i in range(len(spacing) - 1):
         ranges.append([spacing[i], spacing[i+1]])
 
     # Launch a thread for each batch.
@@ -385,7 +386,7 @@ def create(dataset, dataset_name, output_directory, num_shards, num_threads, shu
     error_queue = Queue()
 
     threads = []
-    for thread_index in xrange(len(ranges)):
+    for thread_index in range(len(ranges)):
         args = (coder, thread_index, ranges, dataset_name, output_directory, dataset,
                 num_shards, store_images, error_queue)
         t = threading.Thread(target=_process_image_files_batch, args=args)
